@@ -1,0 +1,41 @@
+{
+	"name": "d1-console",
+	"version": "1.0.0",
+	"author": {
+		"name": "Isaac McFadyen",
+		"email": "isaac@imcf.me",
+		"url": "https://github.com/isaac-mcfadyen/d1-console"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"bin/*"
+	],
+	"keywords": [
+		"cloudflare",
+		"d1",
+		"database",
+		"client"
+	],
+	"bin": {
+		"d1-console": "./bin/cli.js"
+	},
+	"main": "./bin/cli.js",
+	"type": "module",
+	"scripts": {
+		"bundle": "node build.js && chmod +x ./bin/cli.js"
+	},
+	"dependencies": {
+		"ascii-table": "0.0.9",
+		"esbuild": "0.14.48",
+		"node-fetch": "3.2.6"
+	},
+	"devDependencies": {
+		"@types/node": "18.0.1",
+		"typescript": "4.7.4"
+	},
+	"engines": {
+		"node": ">=16.7.0"
+	}
+}
