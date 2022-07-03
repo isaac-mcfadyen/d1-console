@@ -41,14 +41,15 @@ const evalFunction = async (
 	if (reply.success) {
 		const results = reply.result[0].results;
 
-		const table = new AsciiTable();
-		table.setHeading(...Object.keys(results[0]));
+		if (results.length > 0) {
+			const table = new AsciiTable();
+			table.setHeading(...Object.keys(results[0]));
 
-		for (const row of results) {
-			table.addRow(...Object.values(row));
+			for (const row of results) {
+				table.addRow(...Object.values(row));
+			}
+			console.log(table.toString());
 		}
-
-		console.log(table.toString());
 		callback(null);
 	} else {
 		log(reply.result[0].error, Color.RED);

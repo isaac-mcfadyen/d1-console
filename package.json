@@ -1,14 +1,14 @@
 {
 	"name": "d1-console",
 	"version": "1.0.0",
-	"license": "GNU GPL v3.0",
+	"license": "GPL-3.0-or-later",
 	"author": {
 		"name": "Isaac McFadyen",
 		"email": "isaac@imcf.me"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/isaac-mcfadyen/d1-console"
+		"url": "https://github.com/isaac-mcfadyen/d1-console.git"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -32,10 +32,10 @@
 	},
 	"dependencies": {
 		"ascii-table": "0.0.9",
-		"esbuild": "0.14.48",
 		"node-fetch": "3.2.6"
 	},
 	"devDependencies": {
+		"esbuild": "0.14.48",
 		"@types/node": "18.0.1",
 		"typescript": "4.7.4"
 	},
