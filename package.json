@@ -4,7 +4,10 @@
 	"license": "GNU GPL v3.0",
 	"author": {
 		"name": "Isaac McFadyen",
-		"email": "isaac@imcf.me",
+		"email": "isaac@imcf.me"
+	},
+	"repository": {
+		"type": "git",
 		"url": "https://github.com/isaac-mcfadyen/d1-console"
 	},
 	"publishConfig": {
