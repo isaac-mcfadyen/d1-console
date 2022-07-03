@@ -12,7 +12,7 @@ import {
 } from "./authentication.js";
 import { validateQuery } from "./queries.js";
 import { Color, log, question, rl } from "./userInterface.js";
-import AsciiTable from "ascii-table";
+import { table } from "table";
 
 const evalFunction = async (
 	cmd: string,
@@ -42,13 +42,32 @@ const evalFunction = async (
 		const results = reply.result[0].results;
 
 		if (results.length > 0) {
-			const table = new AsciiTable();
-			table.setHeading(...Object.keys(results[0]));
+			let data = [];
 
-			for (const row of results) {
-				table.addRow(...Object.values(row));
+			let headers = [];
+			for (let key of Object.keys(results[0])) {
+				headers.push("\x1b[1m" + key + "\x1b[0m");
 			}
-			console.log(table.toString());
+			data.push(headers);
+
+			for (const result of results) {
+				let row = [];
+				for (let value of Object.values(result)) {
+					row.push(value);
+				}
+				data.push(row);
+			}
+
+			const width = process.stdout.columns;
+			const numberOfColumns = data[0].length + 1.5;
+			const columnWidth = Math.floor(width / numberOfColumns);
+			const config = {
+				columnDefault: {
+					width: columnWidth,
+					wrapWord: true,
+				},
+			};
+			console.log(table(data, config));
 		}
 		callback(null);
 	} else {
