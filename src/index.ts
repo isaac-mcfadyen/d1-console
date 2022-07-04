@@ -41,37 +41,41 @@ const evalFunction = async (
 	if (reply.success) {
 		const results = reply.result[0].results;
 
-		if (results.length > 0) {
-			let data = [];
+		if (process.argv[2] === "--json") {
+			console.log(JSON.stringify(results, null, 2));
+		} else {
+			if (results.length > 0) {
+				let data = [];
 
-			let headers = [];
-			for (let key of Object.keys(results[0])) {
-				headers.push("\x1b[1m" + key + "\x1b[0m");
-			}
-			data.push(headers);
-
-			for (const result of results) {
-				let row = [];
-				for (let value of Object.values(result)) {
-					row.push(value);
+				let headers = [];
+				for (let key of Object.keys(results[0])) {
+					headers.push("\x1b[1m" + key + "\x1b[0m");
 				}
-				data.push(row);
-			}
+				data.push(headers);
 
-			const width = process.stdout.columns;
-			const numberOfColumns = data[0].length + 1.5;
-			const columnWidth = Math.floor(width / numberOfColumns);
-			const config = {
-				columnDefault: {
-					width: columnWidth,
-					wrapWord: true,
-				},
-			};
-			console.log(table(data, config));
+				for (const result of results) {
+					let row = [];
+					for (let value of Object.values(result)) {
+						row.push(value);
+					}
+					data.push(row);
+				}
+
+				const width = process.stdout.columns;
+				const numberOfColumns = data[0].length + 1.5;
+				const columnWidth = Math.floor(width / numberOfColumns);
+				const config = {
+					columnDefault: {
+						width: columnWidth,
+						wrapWord: true,
+					},
+				};
+				console.log(table(data, config));
+			}
 		}
 		callback(null);
 	} else {
-		log(reply.result[0].error, Color.RED);
+		log(reply.result[0].error || "Error querying D1.", Color.RED);
 		callback(null);
 	}
 

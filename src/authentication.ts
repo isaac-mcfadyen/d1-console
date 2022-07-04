@@ -12,8 +12,8 @@ export const checkAuthentication = async () => {
 	const reply = await runFetch("/user/tokens/verify");
 	return reply.ok;
 };
-export const runFetch = (endpoint: string, options?: RequestInit) =>
-	fetch(apiBase + endpoint, {
+export const runFetch = (endpoint: string, options?: RequestInit) => {
+	return fetch(apiBase + endpoint, {
 		...options,
 		headers: {
 			...options?.headers,
@@ -21,6 +21,7 @@ export const runFetch = (endpoint: string, options?: RequestInit) =>
 			"Content-Type": "application/json",
 		},
 	});
+};
 
 export const runQuery = async (query: string): Promise<any> => {
 	const reply = await runFetch(
