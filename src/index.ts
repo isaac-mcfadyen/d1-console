@@ -14,12 +14,19 @@ import { validateQuery } from "./queries.js";
 import { Color, log, question, rl } from "./userInterface.js";
 import { table } from "table";
 
+let lastCommand = "";
+
 const evalFunction = async (
 	cmd: string,
 	context: any,
 	filename: string,
 	callback: Function
 ) => {
+	if (cmd.trim().replace(/\n/g, "") === lastCommand) {
+		console.log("Type a semicolon to execute the query.");
+	}
+	lastCommand = cmd.trim().replace(/\n/g, "");
+
 	// Check if the last character is not a semicolon.
 	const strippedCommand = cmd.trim();
 	if (!strippedCommand.endsWith(";")) {
@@ -39,10 +46,12 @@ const evalFunction = async (
 
 	const reply = await runQuery(strippedCommand);
 	if (reply.success) {
-		const results = reply.result[0].results;
+		const results = reply.result[0]?.results || [];
 
 		if (process.argv[2] === "--json") {
 			console.log(JSON.stringify(results, null, 2));
+		} else if (process.argv[2] === "--json-all") {
+			console.log(JSON.stringify(reply.result[0], null, 2));
 		} else {
 			if (results.length > 0) {
 				let data = [];

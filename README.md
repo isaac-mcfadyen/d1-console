@@ -17,3 +17,7 @@ To get started, run `npx d1-console` (or use another package manager of your cho
 Options:
 
 - `--json` to run in JSON mode (no table graphics).
+- `--json-all` to show the entire JSON response (including parameters such as query time).
+
+For more info and to get help, join us on the [Cloudflare Developers 
+Discord](https://discord.gg/cloudflaredev)!
