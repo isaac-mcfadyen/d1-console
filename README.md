@@ -2,6 +2,8 @@
 
 **A console/REPL for [Cloudflare's D1 Database](https://blog.cloudflare.com/introducing-d1/) product.**
 
+[NPM](https://www.npmjs.com/package/d1-console) | [GitHub](https://github.com/isaac-mcfadyen/d1-console)
+
 Supports all the features expected of a modern database client, including:
 
 - multiline queries
