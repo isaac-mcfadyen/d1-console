@@ -6,5 +6,7 @@ buildSync({
 	format: "esm",
 	bundle: true,
 	platform: "node",
-	banner: { js: "#!/usr/bin/env node" },
+	banner: {
+		js: "#!/usr/bin/env node\nimport { createRequire } from 'module';const require = createRequire(import.meta.url);",
+	},
 });

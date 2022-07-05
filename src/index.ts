@@ -5,15 +5,20 @@ import {
 	deleteAuthentication,
 	readAuthentication,
 	setAuthentication,
-	setDb,
 	writeAuthentication,
-	runQuery,
-	listDbs,
 } from "./authentication.js";
-import { validateQuery } from "./queries.js";
-import { Color, log, question, rl } from "./userInterface.js";
+import { Color, log, openRl, question, rl } from "./userInterface.js";
 import { table } from "table";
+import {
+	createDatabase,
+	databaseFromName,
+	deleteDatabase,
+	listDatabases,
+	queryDatabase,
+} from "./api.js";
+import ora from "ora";
 
+let currentDb = { uuid: "", name: "" };
 let lastCommand = "";
 
 const evalFunction = async (
@@ -22,12 +27,11 @@ const evalFunction = async (
 	filename: string,
 	callback: Function
 ) => {
+	// Allow multiline, and prompt if this is an empty line.
 	if (cmd.trim().replace(/\n/g, "") === lastCommand) {
 		console.log("Type a semicolon to execute the query.");
 	}
 	lastCommand = cmd.trim().replace(/\n/g, "");
-
-	// Check if the last character is not a semicolon.
 	const strippedCommand = cmd.trim();
 	if (!strippedCommand.endsWith(";")) {
 		// If not, allow multiline.
@@ -35,73 +39,162 @@ const evalFunction = async (
 		return;
 	}
 
-	const validation = validateQuery(cmd);
-	if (!validation.valid) {
-		log("Error: " + validation.error || "Invalid query.", Color.RED);
-		callback(null);
-		return;
-	}
+	lastCommand = "";
 
 	queryRepl.pause();
 
-	const reply = await runQuery(strippedCommand);
-	if (reply.success) {
-		const results = reply.result[0]?.results || [];
+	// Split the command on semicolons.
+	const commands = strippedCommand.split(";");
+	for (const command of commands.map((cmd) => cmd.trim().toUpperCase())) {
+		if (command.length === 0) continue;
 
-		if (process.argv[2] === "--json") {
-			console.log(JSON.stringify(results, null, 2));
-		} else if (process.argv[2] === "--json-all") {
-			console.log(JSON.stringify(reply.result[0], null, 2));
-		} else {
-			if (results.length > 0) {
-				let data = [];
+		if (cmd.startsWith("USE ")) {
+			const dbName = cmd
+				.split("USE ")[1]
+				.trim()
+				.replace(/;/g, "")
+				.replace(/\n/g, "");
+			const loadingSpinner = ora(`Connecting to ${dbName}`).start();
+			const db = await databaseFromName(dbName);
+			if (db != null) {
+				currentDb = db;
+				loadingSpinner.succeed(`Now querying ${db.name}`);
+				queryRepl.setPrompt(`${db.name} > `);
+				callback(null);
+			}
+		} else if (cmd.startsWith("CREATE DATABASE ")) {
+			const dbName = cmd
+				.split("CREATE DATABASE ")[1]
+				.trim()
+				.replace(/;/g, "")
+				.replace(/\n/g, "");
+			const loadingSpinner = ora(`Creating database ${dbName}`).start();
+			const db = await createDatabase(dbName);
+			if (db.success) {
+				loadingSpinner.succeed(`Created database ${dbName}`);
+				callback(null);
+			} else {
+				loadingSpinner.fail("Failed to create database, please try again.");
+				callback(null);
+			}
+		} else if (cmd.startsWith("DROP DATABASE ")) {
+			const dbName = cmd
+				.split("DROP DATABASE ")[1]
+				.trim()
+				.replace(/;/g, "")
+				.replace(/\n/g, "");
 
-				let headers = [];
-				for (let key of Object.keys(results[0])) {
-					headers.push("\x1b[1m" + key + "\x1b[0m");
-				}
-				data.push(headers);
-
-				for (const result of results) {
-					let row = [];
-					for (let value of Object.values(result)) {
-						row.push(value);
+			log(
+				`Are you sure you want to delete the database "${dbName}"? THIS IS PERMANENT AND CANNOT BE UNDONE.`,
+				Color.RED
+			);
+			queryRepl.question("Type 'yes' to continue: ", async (answer) => {
+				lastCommand = "";
+				queryRepl.pause();
+				if (answer.toLowerCase() === "yes") {
+					const loadingSpinner = ora(`Deleting database ${dbName}`).start();
+					const db = await databaseFromName(dbName);
+					if (db == null) {
+						loadingSpinner.fail("Database does not exist.");
+						callback(null);
+						return;
 					}
-					data.push(row);
+					deleteDatabase(db.uuid);
+					loadingSpinner.succeed(`Deleted database ${dbName}`);
+					callback(null);
 				}
+				queryRepl.resume();
+			});
+		} else if (cmd.startsWith("SHOW DATABASES")) {
+			const loadingSpinner = ora("Fetching databases...").start();
+			const dbs = await listDatabases();
+			if (dbs != null) {
+				loadingSpinner.succeed("Fetched databases");
+				log("Available databases: ", Color.BLUE);
+				for (const db of dbs) {
+					log(`${db.name}`, Color.BLUE);
+				}
+				callback(null);
+			} else {
+				loadingSpinner.fail("Failed to fetch databases, please try again.");
+				callback(null);
+			}
+		} else {
+			if (currentDb.uuid.length <= 0) {
+				log(
+					"No database selected. Run USE <name>; to select a database.",
+					Color.RED
+				);
+				callback(null);
+				return;
+			}
 
-				const width = process.stdout.columns;
-				const numberOfColumns = data[0].length + 1.5;
-				const columnWidth = Math.floor(width / numberOfColumns);
-				const config = {
-					columnDefault: {
-						width: columnWidth,
-						wrapWord: true,
-					},
-				};
-				console.log(table(data, config));
+			const reply = await queryDatabase(
+				currentDb.uuid,
+				command.trim().replace(/\n/g, "")
+			);
+			if (reply.success) {
+				const results = reply.result[0]?.results || [];
+
+				if (process.argv[2] === "--json") {
+					console.log(JSON.stringify(results, null, 2));
+				} else if (process.argv[2] === "--json-all") {
+					console.log(JSON.stringify(reply.result[0], null, 2));
+				} else {
+					if (results.length > 0) {
+						let data = [];
+
+						let headers = [];
+						for (let key of Object.keys(results[0])) {
+							headers.push("\x1b[1m" + key + "\x1b[0m");
+						}
+						data.push(headers);
+
+						for (const result of results) {
+							let row = [];
+							for (let value of Object.values(result)) {
+								row.push(value);
+							}
+							data.push(row);
+						}
+
+						const width = process.stdout.columns;
+						const numberOfColumns = data[0].length + 1.5;
+						const columnWidth = Math.floor(width / numberOfColumns);
+						const config = {
+							columnDefault: {
+								width: columnWidth,
+								wrapWord: true,
+							},
+						};
+						console.log(table(data, config));
+					}
+				}
+				callback(null);
+			} else {
+				log(reply.errors[0].message || "Error querying D1.", Color.RED);
+				callback(null);
 			}
 		}
-		callback(null);
-	} else {
-		log(reply.result[0].error || "Error querying D1.", Color.RED);
-		callback(null);
 	}
 
 	queryRepl.resume();
 };
 
-log("Welcome to the D1 console!", Color.BLUE);
+log("Welcome to D1 Console!", Color.BLUE);
+
+openRl();
 
 const hasSavedAuth = readAuthentication();
 if (hasSavedAuth) {
-	log("Using saved authentication.", Color.GREEN);
-
 	const validAuth = await checkAuthentication();
 	if (validAuth) {
-		log("Authentication successful.", Color.GREEN);
+		log("Using saved authentication.", Color.GREEN);
 	} else {
-		log("Saved authentication invalid, removing saved credentials.", Color.RED);
+		log(
+			"Saved authentication invalid, removing saved credentials. Please try relaunching.",
+			Color.RED
+		);
 		deleteAuthentication();
 		process.exit(1);
 	}
@@ -143,31 +236,22 @@ if (hasSavedAuth) {
 		log("Authentication details will NOT be saved.", Color.GREEN);
 	}
 }
-
-log("Please enter the number of the database you want to use:", Color.BLUE);
-const dbs = await listDbs();
-for (const index in dbs) {
-	log(index + ": " + dbs[index].name, Color.BLUE);
-}
-const dbNumber = Number(await question("Database Number: "));
-
-// Check if it's a number and within range.
-if (isNaN(dbNumber) || dbNumber < 0 || dbNumber >= dbs.length) {
-	log("Invalid database number.", Color.RED);
-	process.exit(1);
-}
-
-const dbName = dbs[dbNumber].name;
-const dbUuid = dbs[dbNumber].uuid;
-log('Using database with name "' + dbName + '"', Color.GREEN);
-setDb(dbUuid);
-
-log("Connecting to database...", Color.BLUE);
-
 rl.close();
 
+log("To create a D1 database, use CREATE DATABASE <name>;", Color.BLUE);
+log(
+	"To list the available databases on your account, use SHOW DATABASES;",
+	Color.BLUE
+);
+log(
+	"If you know the name of the database you would like to query, run USE <name>;",
+	Color.BLUE
+);
+log("To delete an existing D1 database, use DROP DATABASE <name>;", Color.BLUE);
+log("To show this help again, type HELP;", Color.BLUE);
+
 const queryRepl = repl.start({
-	prompt: dbs[dbNumber].name + " > ",
+	prompt: "D1 > ",
 	eval: evalFunction,
 	input: process.stdin,
 	output: process.stdout,
