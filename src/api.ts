@@ -1,4 +1,4 @@
-import { accountId, runFetch } from "./authentication";
+import { accountId, apiToken, runFetch } from "./authentication";
 
 export const createDatabase = async (name: string): Promise<any> => {
 	const reply = await runFetch(`/accounts/${accountId}/d1/database`, {

@@ -45,10 +45,10 @@ const evalFunction = async (
 
 	// Split the command on semicolons.
 	const commands = strippedCommand.split(";");
-	for (const command of commands.map((cmd) => cmd.trim().toUpperCase())) {
+	for (const command of commands.map((cmd) => cmd.trim())) {
 		if (command.length === 0) continue;
 
-		if (cmd.startsWith("USE ")) {
+		if (cmd.toUpperCase().startsWith("USE ")) {
 			const dbName = cmd
 				.split("USE ")[1]
 				.trim()
@@ -62,7 +62,7 @@ const evalFunction = async (
 				queryRepl.setPrompt(`${db.name} > `);
 				callback(null);
 			}
-		} else if (cmd.startsWith("CREATE DATABASE ")) {
+		} else if (cmd.toUpperCase().startsWith("CREATE DATABASE ")) {
 			const dbName = cmd
 				.split("CREATE DATABASE ")[1]
 				.trim()
@@ -77,7 +77,7 @@ const evalFunction = async (
 				loadingSpinner.fail("Failed to create database, please try again.");
 				callback(null);
 			}
-		} else if (cmd.startsWith("DROP DATABASE ")) {
+		} else if (cmd.toUpperCase().startsWith("DROP DATABASE ")) {
 			const dbName = cmd
 				.split("DROP DATABASE ")[1]
 				.trim()
@@ -105,7 +105,7 @@ const evalFunction = async (
 				}
 				queryRepl.resume();
 			});
-		} else if (cmd.startsWith("SHOW DATABASES")) {
+		} else if (cmd.toUpperCase().startsWith("SHOW DATABASES")) {
 			const loadingSpinner = ora("Fetching databases...").start();
 			const dbs = await listDatabases();
 			if (dbs != null) {
