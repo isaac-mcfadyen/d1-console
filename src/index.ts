@@ -48,9 +48,9 @@ const evalFunction = async (
 	for (const command of commands.map((cmd) => cmd.trim())) {
 		if (command.length === 0) continue;
 
-		if (cmd.toUpperCase().startsWith("USE ")) {
-			const dbName = cmd
-				.split("USE ")[1]
+		if (command.toUpperCase().startsWith("USE ")) {
+			const dbName = command
+				.split(new RegExp("USE ", "i"))[1]
 				.trim()
 				.replace(/;/g, "")
 				.replace(/\n/g, "");
@@ -60,11 +60,14 @@ const evalFunction = async (
 				currentDb = db;
 				loadingSpinner.succeed(`Now querying ${db.name}`);
 				queryRepl.setPrompt(`${db.name} > `);
-				callback(null);
+				continue;
+			} else {
+				loadingSpinner.fail(`Could not find database ${dbName}`);
+				continue;
 			}
-		} else if (cmd.toUpperCase().startsWith("CREATE DATABASE ")) {
-			const dbName = cmd
-				.split("CREATE DATABASE ")[1]
+		} else if (command.toUpperCase().startsWith("CREATE DATABASE ")) {
+			const dbName = command
+				.split(new RegExp("CREATE DATABASE ", "i"))[1]
 				.trim()
 				.replace(/;/g, "")
 				.replace(/\n/g, "");
@@ -72,14 +75,14 @@ const evalFunction = async (
 			const db = await createDatabase(dbName);
 			if (db.success) {
 				loadingSpinner.succeed(`Created database ${dbName}`);
-				callback(null);
+				continue;
 			} else {
 				loadingSpinner.fail("Failed to create database, please try again.");
-				callback(null);
+				continue;
 			}
-		} else if (cmd.toUpperCase().startsWith("DROP DATABASE ")) {
-			const dbName = cmd
-				.split("DROP DATABASE ")[1]
+		} else if (command.toUpperCase().startsWith("DROP DATABASE ")) {
+			const dbName = command
+				.split(new RegExp("DROP DATABASE ", "i"))[1]
 				.trim()
 				.replace(/;/g, "")
 				.replace(/\n/g, "");
@@ -101,10 +104,10 @@ const evalFunction = async (
 					}
 					deleteDatabase(db.uuid);
 					loadingSpinner.succeed(`Deleted database ${dbName}`);
-					callback(null);
 				}
 				queryRepl.resume();
 			});
+			continue;
 		} else if (cmd.toUpperCase().startsWith("SHOW DATABASES")) {
 			const loadingSpinner = ora("Fetching databases...").start();
 			const dbs = await listDatabases();
@@ -114,10 +117,10 @@ const evalFunction = async (
 				for (const db of dbs) {
 					log(`${db.name}`, Color.BLUE);
 				}
-				callback(null);
+				continue;
 			} else {
 				loadingSpinner.fail("Failed to fetch databases, please try again.");
-				callback(null);
+				continue;
 			}
 		} else {
 			if (currentDb.uuid.length <= 0) {
@@ -125,21 +128,20 @@ const evalFunction = async (
 					"No database selected. Run USE <name>; to select a database.",
 					Color.RED
 				);
-				callback(null);
-				return;
+				continue;
 			}
 
 			const reply = await queryDatabase(
 				currentDb.uuid,
-				command.trim().replace(/\n/g, "")
+				command.replace(/\n/g, "")
 			);
 			if (reply.success) {
-				const results = reply.result[0]?.results || [];
+				const results = reply.result[0].results || [];
 
 				if (process.argv[2] === "--json") {
 					console.log(JSON.stringify(results, null, 2));
 				} else if (process.argv[2] === "--json-all") {
-					console.log(JSON.stringify(reply.result[0], null, 2));
+					console.log(JSON.stringify(reply.result, null, 2));
 				} else {
 					if (results.length > 0) {
 						let data = [];
@@ -149,14 +151,9 @@ const evalFunction = async (
 							headers.push("\x1b[1m" + key + "\x1b[0m");
 						}
 						data.push(headers);
-
-						for (const result of results) {
-							let row = [];
-							for (let value of Object.values(result)) {
-								row.push(value);
-							}
-							data.push(row);
-						}
+						data = data.concat(
+							results.map((row: any) => [...Object.values(row)])
+						);
 
 						const width = process.stdout.columns;
 						const numberOfColumns = data[0].length + 1.5;
@@ -168,17 +165,22 @@ const evalFunction = async (
 							},
 						};
 						console.log(table(data, config));
+					} else {
+						if (command.includes("SELECT")) {
+							console.log("No results found.");
+						}
 					}
 				}
-				callback(null);
+				continue;
 			} else {
-				log(reply.errors[0].message || "Error querying D1.", Color.RED);
-				callback(null);
+				log(reply.error, Color.RED);
+				continue;
 			}
 		}
 	}
 
 	queryRepl.resume();
+	callback(null);
 };
 
 log("Welcome to D1 Console!", Color.BLUE);

@@ -50,13 +50,27 @@ export const databaseFromName = async (name: string) => {
 export const queryDatabase = async (
 	dbId: string,
 	query: string
-): Promise<any> => {
-	const reply = await runFetch(
-		`/accounts/${accountId}/d1/database/${dbId}/query`,
-		{
-			method: "POST",
-			body: JSON.stringify({ sql: query }),
+): Promise<{ success: true; result: any } | { success: false; error: any }> => {
+	try {
+		const reply = await runFetch(
+			`/accounts/${accountId}/d1/database/${dbId}/query`,
+			{
+				method: "POST",
+				body: JSON.stringify({ sql: query }),
+			}
+		);
+		if (reply.ok) {
+			const jsonData = (await reply.json()) as any;
+			return { success: true, result: jsonData.result };
+		} else {
+			try {
+				const jsonData = (await reply.json()) as any;
+				return { success: false, error: jsonData.errors[0].message };
+			} catch (e) {
+				return { success: false, error: reply.statusText };
+			}
 		}
-	);
-	return await reply.json();
+	} catch (e: any) {
+		return { success: false, error: e.message };
+	}
 };
