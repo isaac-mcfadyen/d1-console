@@ -32,7 +32,6 @@
 	},
 	"devDependencies": {
 		"@types/node": "18.0.1",
-		"ascii-table": "0.0.9",
 		"esbuild": "0.14.48",
 		"node-fetch": "3.2.6",
 		"ora": "^6.1.2",
