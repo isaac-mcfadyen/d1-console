@@ -25,7 +25,15 @@ declare global {
 	var VERSION: string
 }
 
-const evalFunction = async (
+const helpMessage = `To get the current version of d1-console, use VERSION;
+To create a D1 database, use CREATE DATABASE <name>;
+To list the available databases on your account, use SHOW DATABASES;
+If you know the name of the database you would like to query, run USE <name>;
+To delete an existing D1 database, use DROP DATABASE <name>;
+To show this help again, type HELP;
+To learn more about d1-console, type ABOUT;
+To exit d1-console, type EXIT;`,
+evalFunction = async (
 	cmd: string,
 	context: any,
 	filename: string,
@@ -145,6 +153,8 @@ Supports all the features expected of a modern database client, including:
  • the ability to save your Cloudflare credentials for later use (opt-in)
 
 d1-console is built and maintained by Isaac McFadyen(https://github.com/isaac-mcfadyen), and utilizes the safe-buffer package by Feross Aboukhadijeh(https://feross.org/opensource), and the fetch-blob, formdata-polyfill and node-domexception packages by Jimmy Wärting(https://jimmy.warting.se/opensource).`, Color.BLUE);
+		} else if (commandIs("HELP")) {
+			log(helpMessage, Color.BLUE);
 		} else {
 			if (currentDb.uuid.length <= 0) {
 				log(
@@ -263,14 +273,7 @@ if (hasSavedAuth) {
 }
 rl.close();
 
-log(`To get the current version of d1-console, use VERSION;
-To create a D1 database, use CREATE DATABASE <name>;
-To list the available databases on your account, use SHOW DATABASES;
-If you know the name of the database you would like to query, run USE <name>;
-To delete an existing D1 database, use DROP DATABASE <name>;
-To show this help again, type HELP;
-To learn more about d1-console, type ABOUT;
-To exit d1-console, type EXIT;`, Color.BLUE);
+log(helpMessage, Color.BLUE);
 
 const queryRepl = repl.start({
 	prompt: "D1 > ",
