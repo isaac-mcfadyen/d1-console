@@ -21,7 +21,19 @@ import ora from "ora";
 let currentDb = { uuid: "", name: "" };
 let lastCommand = "";
 
-const evalFunction = async (
+declare global {
+	var VERSION: string
+}
+
+const helpMessage = `To get the current version of d1-console, use VERSION;
+To create a D1 database, use CREATE DATABASE <name>;
+To list the available databases on your account, use SHOW DATABASES;
+If you know the name of the database you would like to query, run USE <name>;
+To delete an existing D1 database, use DROP DATABASE <name>;
+To show this help again, type HELP;
+To learn more about d1-console, type ABOUT;
+To exit d1-console, type EXIT;`,
+evalFunction = async (
 	cmd: string,
 	context: any,
 	filename: string,
@@ -47,8 +59,9 @@ const evalFunction = async (
 	const commands = strippedCommand.split(";");
 	for (const command of commands.map((cmd) => cmd.trim())) {
 		if (command.length === 0) continue;
-
-		if (command.toUpperCase().startsWith("USE ")) {
+		const commandUppercased = command.toUpperCase(),
+			commandIs = (query: string): boolean => commandUppercased.startsWith(query);
+		if (commandIs("USE ")) {
 			const dbName = command
 				.split(new RegExp("USE ", "i"))[1]
 				.trim()
@@ -65,7 +78,7 @@ const evalFunction = async (
 				loadingSpinner.fail(`Could not find database ${dbName}`);
 				continue;
 			}
-		} else if (command.toUpperCase().startsWith("CREATE DATABASE ")) {
+		} else if (commandIs("CREATE DATABASE ")) {
 			const dbName = command
 				.split(new RegExp("CREATE DATABASE ", "i"))[1]
 				.trim()
@@ -80,7 +93,7 @@ const evalFunction = async (
 				loadingSpinner.fail("Failed to create database, please try again.");
 				continue;
 			}
-		} else if (command.toUpperCase().startsWith("DROP DATABASE ")) {
+		} else if (commandIs("DROP DATABASE ")) {
 			const dbName = command
 				.split(new RegExp("DROP DATABASE ", "i"))[1]
 				.trim()
@@ -108,12 +121,14 @@ const evalFunction = async (
 				queryRepl.resume();
 			});
 			continue;
-		} else if (cmd.toUpperCase().startsWith("SHOW DATABASES")) {
+		} else if (commandIs("SHOW DATABASES")) {
 			const loadingSpinner = ora("Fetching databases...").start();
 			const dbs = await listDatabases();
 			if (dbs != null) {
 				loadingSpinner.succeed("Fetched databases");
 				log("Available databases: ", Color.BLUE);
+				if(dbs.length === 0)
+				log("None", Color.RED);
 				for (const db of dbs) {
 					log(`${db.name}`, Color.BLUE);
 				}
@@ -122,6 +137,24 @@ const evalFunction = async (
 				loadingSpinner.fail("Failed to fetch databases, please try again.");
 				continue;
 			}
+		} else if (commandIs("VERSION")) {
+			log(VERSION, Color.GREEN);
+		} else if (commandIs("EXIT")) {
+			log("Exiting D1 Console...", Color.BLUE);
+			queryRepl.close();
+			process.exit(0);
+		} else if (commandIs("ABOUT")) {
+			log(`A console/REPL for Cloudflare's D1 Database product.
+
+Supports all the features expected of a modern database client, including:
+ • multiline queries
+ • table-formatted query outputs
+ • command history
+ • the ability to save your Cloudflare credentials for later use (opt-in)
+
+d1-console is built and maintained by Isaac McFadyen(https://github.com/isaac-mcfadyen), and utilizes the safe-buffer package by Feross Aboukhadijeh(https://feross.org/opensource), and the fetch-blob, formdata-polyfill and node-domexception packages by Jimmy Wärting(https://jimmy.warting.se/opensource).`, Color.BLUE);
+		} else if (commandIs("HELP")) {
+			log(helpMessage, Color.BLUE);
 		} else {
 			if (currentDb.uuid.length <= 0) {
 				log(
@@ -240,17 +273,7 @@ if (hasSavedAuth) {
 }
 rl.close();
 
-log("To create a D1 database, use CREATE DATABASE <name>;", Color.BLUE);
-log(
-	"To list the available databases on your account, use SHOW DATABASES;",
-	Color.BLUE
-);
-log(
-	"If you know the name of the database you would like to query, run USE <name>;",
-	Color.BLUE
-);
-log("To delete an existing D1 database, use DROP DATABASE <name>;", Color.BLUE);
-log("To show this help again, type HELP;", Color.BLUE);
+log(helpMessage, Color.BLUE);
 
 const queryRepl = repl.start({
 	prompt: "D1 > ",
