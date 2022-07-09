@@ -2,6 +2,7 @@
 	"name": "d1-console",
 	"version": "1.2.2",
 	"license": "GPL-3.0-or-later",
+	"description": "A full query console for Cloudflare's D1 database product.",
 	"author": {
 		"name": "Isaac McFadyen",
 		"email": "isaac@imcf.me"
