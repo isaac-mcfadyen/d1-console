@@ -31,7 +31,7 @@ export const listDatabases = async (): Promise<
 			const results = json.result;
 			databases.push(...results);
 			page++;
-			if (json.length < perPage) {
+			if (results.length < perPage) {
 				break;
 			}
 		}
