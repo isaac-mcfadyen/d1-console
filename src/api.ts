@@ -29,6 +29,7 @@ export const listDatabases = async (): Promise<
 			);
 			const json = (await response.json()) as any;
 			const results = json.result;
+			if(results.length === 0) break;
 			for (const result of results) {
 				databases.push(result);
 			}
