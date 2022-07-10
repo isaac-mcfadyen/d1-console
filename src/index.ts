@@ -276,8 +276,6 @@ if (hasSavedAuth) {
 }
 rl.close();
 
-log(helpMessage, Color.BLUE);
-
 const queryRepl = repl.start({
 	prompt: "D1 > ",
 	eval: evalFunction,
@@ -286,3 +284,12 @@ const queryRepl = repl.start({
 });
 const homedir = os.homedir();
 queryRepl.setupHistory(homedir + "/.d1/history", () => {});
+
+if (process.argv[2] == "--execute") {
+	await evalFunction(process.argv[3], null, "", () => {
+		console.log("Executed commands, exiting.");
+	});
+	process.exit(0);
+}
+
+log(helpMessage, Color.BLUE);

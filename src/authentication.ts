@@ -23,6 +23,16 @@ export const runFetch = (endpoint: string, options?: RequestInit) => {
 };
 
 export const readAuthentication = () => {
+	// Check process.env first.
+	if (
+		process.env.CLOUDFLARE_ACCOUNT_ID != null &&
+		process.env.CLOUDFLARE_API_TOKEN != null
+	) {
+		apiToken = process.env.CLOUDFLARE_API_TOKEN;
+		accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+		return true;
+	}
+
 	try {
 		const homedir = os.homedir();
 		const authFile = fs.readFileSync(homedir + "/.d1/credentials.json");
