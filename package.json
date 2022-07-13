@@ -29,7 +29,8 @@
 	"main": "./bin/cli.js",
 	"type": "module",
 	"scripts": {
-		"bundle": "node build.js && chmod +x ./bin/cli.js"
+		"bundle": "node build.js && chmod +x ./bin/cli.js",
+		"prepublish": "npm run bundle"
 	},
 	"devDependencies": {
 		"@types/node": "18.0.1",
