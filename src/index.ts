@@ -169,7 +169,7 @@ d1-console is built and maintained by Isaac McFadyen, and utilizes the safe-buff
 
 				const reply = await queryDatabase(
 					currentDb.uuid,
-					command.replace(/\n/g, "")
+					query.split("\n").map(e => e.trim()).join(" ")
 				);
 				if (reply.success) {
 					const results = reply.result[0].results || [];
