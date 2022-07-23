@@ -59,9 +59,11 @@ To exit d1-console, type EXIT;`,
 		const commands = strippedCommand.split(";");
 		for (const command of commands.map((cmd) => cmd.trim())) {
 			if (command.length === 0) continue;
-			const commandUppercased = command.toUpperCase(),
-				commandIs = (query: string): boolean =>
-					commandUppercased.startsWith(query);
+
+			const commandUppercased = command.toUpperCase();
+			const commandIs = (query: string): boolean =>
+				commandUppercased.startsWith(query);
+
 			if (commandIs("USE ")) {
 				const dbName = command
 					.split(new RegExp("USE ", "i"))[1]
@@ -169,7 +171,10 @@ d1-console is built and maintained by Isaac McFadyen, and utilizes the safe-buff
 
 				const reply = await queryDatabase(
 					currentDb.uuid,
-					query.split("\n").map(e => e.trim()).join(" ")
+					command
+						.split("\n")
+						.map((e) => e.trim())
+						.join(" ")
 				);
 				if (reply.success) {
 					const results = reply.result[0].results || [];
@@ -276,6 +281,8 @@ if (hasSavedAuth) {
 }
 rl.close();
 
+log(helpMessage, Color.BLUE);
+
 const queryRepl = repl.start({
 	prompt: "D1 > ",
 	eval: evalFunction,
@@ -291,5 +298,3 @@ if (process.argv[2] == "--execute") {
 	});
 	process.exit(0);
 }
-
-log(helpMessage, Color.BLUE);
