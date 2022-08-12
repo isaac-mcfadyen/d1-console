@@ -20,6 +20,7 @@ Options:
 
 - `--json` to run in JSON mode (no table graphics).
 - `--json-all` to show the entire JSON response (including parameters such as query time).
+- '--execute $COMMAND` to execute an arbitrary command without a REPL (the command must begin with `USE database_name;` to select your database).
 
 For more info and to get help, join us on the [Cloudflare Developers 
 Discord](https://discord.gg/cloudflaredev)!
