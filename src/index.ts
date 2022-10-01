@@ -7,7 +7,7 @@ import {
 	setAuthentication,
 	writeAuthentication,
 } from "./authentication.js";
-import { Color, log, openRl, question, rl } from "./userInterface.js";
+import { openRl, question, rl } from "./userInterface.js";
 import { table } from "table";
 import {
 	createDatabase,
@@ -103,9 +103,8 @@ To exit d1-console, type EXIT;`,
 					.replace(/;/g, "")
 					.replace(/\n/g, "");
 
-				log(
-					`Are you sure you want to delete the database "${dbName}"? THIS IS PERMANENT AND CANNOT BE UNDONE.`,
-					Color.RED
+				console.log(
+					`Are you sure you want to delete the database "${dbName}"? THIS IS PERMANENT AND CANNOT BE UNDONE.`
 				);
 				queryRepl.question("Type 'yes' to continue: ", async (answer) => {
 					lastCommand = "";
@@ -129,10 +128,10 @@ To exit d1-console, type EXIT;`,
 				const dbs = await listDatabases();
 				if (dbs != null) {
 					loadingSpinner.succeed("Fetched databases");
-					log("Available databases: ", Color.BLUE);
-					if (dbs.length === 0) log("None", Color.RED);
+					console.log("Available databases: ");
+					if (dbs.length === 0) console.log("None");
 					for (const db of dbs) {
-						log(`${db.name}`, Color.BLUE);
+						console.log(`${db.name}`);
 					}
 					continue;
 				} else {
@@ -140,13 +139,13 @@ To exit d1-console, type EXIT;`,
 					continue;
 				}
 			} else if (commandIs("VERSION")) {
-				log(VERSION, Color.GREEN);
+				console.log(VERSION);
 			} else if (commandIs("EXIT")) {
-				log("Exiting D1 Console...", Color.BLUE);
+				console.log("Exiting D1 Console...");
 				queryRepl.close();
 				process.exit(0);
 			} else if (commandIs("ABOUT")) {
-				log(
+				console.log(
 					`A console/REPL for Cloudflare's D1 Database product.
 
 Supports all the features expected of a modern database client, including:
@@ -155,16 +154,14 @@ Supports all the features expected of a modern database client, including:
  • command history
  • the ability to save your Cloudflare credentials for later use (opt-in)
 
-d1-console is built and maintained by Isaac McFadyen, and utilizes the safe-buffer package by Feross Aboukhadijeh, and the fetch-blob, formdata-polyfill and node-domexception packages by Jimmy Wärting.`,
-					Color.BLUE
+d1-console is built and maintained by Isaac McFadyen, and utilizes the safe-buffer package by Feross Aboukhadijeh, and the fetch-blob, formdata-polyfill and node-domexception packages by Jimmy Wärting.`
 				);
 			} else if (commandIs("HELP")) {
-				log(helpMessage, Color.BLUE);
+				console.log(helpMessage);
 			} else {
 				if (currentDb.uuid.length <= 0) {
-					log(
-						"No database selected. Run USE <name>; to select a database.",
-						Color.RED
+					console.log(
+						"No database selected. Run USE <name>; to select a database."
 					);
 					continue;
 				}
@@ -214,7 +211,7 @@ d1-console is built and maintained by Isaac McFadyen, and utilizes the safe-buff
 					}
 					continue;
 				} else {
-					log(reply.error, Color.RED);
+					console.log(reply.error);
 					continue;
 				}
 			}
@@ -224,7 +221,7 @@ d1-console is built and maintained by Isaac McFadyen, and utilizes the safe-buff
 		callback(null);
 	};
 
-log("Welcome to D1 Console!", Color.BLUE);
+console.log("Welcome to D1 Console!");
 
 openRl();
 
@@ -232,19 +229,17 @@ const hasSavedAuth = readAuthentication();
 if (hasSavedAuth) {
 	const validAuth = await checkAuthentication();
 	if (validAuth) {
-		log("Using saved authentication.", Color.GREEN);
+		console.log("Using saved authentication.");
 	} else {
-		log(
-			"Saved authentication invalid, removing saved credentials. Please try relaunching.",
-			Color.RED
+		console.log(
+			"Saved authentication invalid, removing saved credentials. Please try relaunching."
 		);
 		deleteAuthentication();
 		process.exit(1);
 	}
 } else {
-	log(
-		"No saved authentication found. Please enter authentication details:",
-		Color.RED
+	console.log(
+		"No saved authentication found. Please enter authentication details:"
 	);
 	const apiToken = await question("API Token: ");
 	const accountId = await question("Account ID: ");
@@ -253,7 +248,7 @@ if (hasSavedAuth) {
 		!/^[a-zA-Z0-9_-]*$/gm.test(apiToken) ||
 		!/^[a-zA-Z0-9_-]*$/gm.test(accountId)
 	) {
-		log("Invalid API Token or Account ID.", Color.RED);
+		console.log("Invalid API Token or Account ID.");
 		process.exit(1);
 	}
 
@@ -261,27 +256,26 @@ if (hasSavedAuth) {
 
 	const validAuth = await checkAuthentication();
 	if (validAuth) {
-		log("Authentication successful.", Color.GREEN);
+		console.log("Authentication successful.");
 	} else {
-		log("Authentication failed.", Color.RED);
+		console.log("Authentication failed.");
 		process.exit(1);
 	}
 
-	log(
-		"Do you want to save these authentication details for later use?",
-		Color.BLUE
+	console.log(
+		"Do you want to save these authentication details for later use?"
 	);
 	const saveAuth = await question("(Y/n): ");
 	if (saveAuth.toLowerCase() === "y") {
 		writeAuthentication();
-		log("Saved authentication details.", Color.GREEN);
+		console.log("Saved authentication details.");
 	} else {
-		log("Authentication details will NOT be saved.", Color.GREEN);
+		console.log("Authentication details will NOT be saved.");
 	}
 }
 rl.close();
 
-log(helpMessage, Color.BLUE);
+console.log(helpMessage);
 
 const queryRepl = repl.start({
 	prompt: "D1 > ",
