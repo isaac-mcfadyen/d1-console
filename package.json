@@ -21,6 +21,8 @@
 		"cloudflare",
 		"d1",
 		"database",
+		"sqlite",
+		"edge",
 		"client"
 	],
 	"bin": {
@@ -34,6 +36,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "18.0.1",
+		"commander": "^9.4.1",
 		"esbuild": "0.14.48",
 		"node-fetch": "3.2.6",
 		"ora": "^6.1.2",
