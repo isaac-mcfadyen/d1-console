@@ -9,18 +9,19 @@ import {
 	writeAuthentication,
 } from "./authentication.js";
 import { table } from "table";
+import { databaseFromNameApi, queryDatabaseApi } from "./api.js";
+import chalk from "chalk";
+import { Command } from "commander";
 import {
 	createDatabase,
-	databaseFromName,
 	deleteDatabase,
 	listDatabases,
 	queryDatabase,
-} from "./api.js";
-import ora from "ora";
-import chalk from "chalk";
-import { Command } from "commander";
+} from "./userInterface.js";
 
+let useJson = false;
 let databaseUuid = "";
+let databaseName = "";
 let lastCommand = "";
 let queryRepl: repl.REPLServer;
 
@@ -52,48 +53,90 @@ const evalFunction = async (
 	}
 
 	// Split the command on semicolons.
-	const commands = strippedCommand.split(";");
-	for (const command of commands.map((cmd) => cmd.trim())) {
-		if (command.length === 0) continue;
+	const commands = strippedCommand
+		.split(";")
+		.map((c) => c.replace(/\n/g, "").trim())
+		.filter((c) => c.length > 0);
 
-		const finalCommand = command
-			.split("\n")
-			.map((e) => e.trim())
-			.join(" ");
-		const reply = await queryDatabase(databaseUuid, finalCommand);
-		if (reply.success) {
-			const results = reply.result[0].results || [];
+	let queuedCommands = [];
+	for (const command of commands) {
+		const upperCommand = command.toUpperCase();
 
-			if (results.length > 0) {
-				let data = [];
-
-				let headers = [];
-				for (let key of Object.keys(results[0])) {
-					headers.push(chalk.bold(key));
-				}
-				data.push(headers);
-				data = data.concat(results.map((row: any) => [...Object.values(row)]));
-
-				const width = process.stdout.columns;
-				const numberOfColumns = data[0].length + 1.5;
-				const columnWidth = Math.floor(width / numberOfColumns);
-				const config = {
-					columnDefault: {
-						width: columnWidth,
-						wrapWord: true,
-					},
-				};
-				console.log(table(data, config));
-			} else {
-				if (command.includes("SELECT")) {
-					console.log("No results found.");
-				}
+		if (
+			!upperCommand.startsWith("USE") &&
+			!upperCommand.startsWith("CREATE DATABASE") &&
+			!upperCommand.startsWith("DROP DATABASE") &&
+			!upperCommand.startsWith("SHOW DATABASES") &&
+			!upperCommand.startsWith("HELP")
+		) {
+			queuedCommands.push(command);
+		} else {
+			// Run any queued commands.
+			const joinedCommands = queuedCommands.join(";");
+			if (joinedCommands.length > 0) {
+				await queryDatabase(joinedCommands, databaseUuid, useJson);
+				queuedCommands = [];
 			}
 
-			continue;
-		} else {
-			console.log(reply.error);
-			continue;
+			if (upperCommand.startsWith("USE")) {
+				const databaseName = command.match(/USE\s+(.*)/);
+				if (databaseName == null) {
+					console.log(chalk.redBright("Invalid USE statement."));
+					return;
+				}
+				const foundDatabase = await databaseFromNameApi(databaseName[1]);
+
+				if (foundDatabase != null) {
+					databaseUuid = foundDatabase.uuid;
+					console.log(
+						chalk.greenBright(`Switched to database ${foundDatabase.name}`)
+					);
+					queryRepl.setPrompt(`${foundDatabase.name} > `);
+				}
+			} else if (upperCommand.startsWith("CREATE DATABASE")) {
+				const databaseName = command.match(/CREATE DATABASE\s+(.*)/);
+				if (databaseName == null) {
+					console.log(chalk.redBright("Invalid CREATE DATABASE statement."));
+					return;
+				}
+				await createDatabase(databaseName[1]);
+			} else if (upperCommand.startsWith("DROP DATABASE")) {
+				const databaseName = command.match(/DROP DATABASE\s+(.*)/);
+				if (databaseName == null) {
+					console.log(chalk.redBright("Invalid DROP DATABASE statement."));
+					return;
+				}
+				await deleteDatabase(databaseName[1]);
+			} else if (upperCommand.startsWith("SHOW DATABASES")) {
+				await listDatabases();
+			} else if (upperCommand.startsWith("HELP")) {
+				console.log(chalk.bold("Available commands: "));
+				console.log(
+					`${chalk.bold(
+						"CREATE DATABASE <name>"
+					)} - Create a new D1 database. ${chalk.bold(
+						"THIS CANNOT BE UNDONE!"
+					)}`
+				);
+				console.log(
+					`${chalk.bold("DROP DATABASE <name>")} - Delete a D1 database.`
+				);
+				console.log(
+					`${chalk.bold("USE <name>")} - Switch to a different database.`
+				);
+				console.log(
+					`${chalk.bold("SHOW DATABASES")} - List your D1 databases.`
+				);
+				console.log(`${chalk.bold("HELP")} - Show this help message.`);
+			}
+		}
+
+		// If this is the last command, run queued commands.
+		if (command == commands[commands.length - 1]) {
+			const joinedCommands = queuedCommands.join(";");
+			if (joinedCommands.length > 0) {
+				await queryDatabase(joinedCommands, databaseUuid, useJson);
+			}
 		}
 	}
 
@@ -140,79 +183,18 @@ databaseSubcommands
 	.command("create")
 	.argument("<name>", "The name of the database to create.")
 	.description("Create a new D1 database.")
-	.action(async (name) => {
-		const spinner = ora("Creating database...").start();
-		const reply = await createDatabase(name);
-		spinner.stop();
-		if (reply.ok) {
-			console.log(chalk.green(`Database ${chalk.bold(name)} created.`));
-		} else {
-			console.log(chalk.redBright("Failed to create database."));
-		}
-	});
+	.action(createDatabase);
 
 databaseSubcommands
 	.command("list")
 	.description("List your D1 databases.")
-	.action(async () => {
-		const spinner = ora("Fetching databases...").start();
-		const reply = await listDatabases();
-		if (reply != null) {
-			if (reply.length === 0) {
-				console.log(
-					chalk.redBright(
-						"No databases found. Create one using the 'databases create' command."
-					)
-				);
-				return;
-			}
-
-			let data = [];
-			let headers = ["Name", "UUID"];
-			data.push(headers);
-			data = data.concat(
-				reply.map((database) => [database.name, database.uuid])
-			);
-			const width = process.stdout.columns;
-			const numberOfColumns = data[0].length + 1.5;
-			const columnWidth = Math.floor(width / numberOfColumns);
-			const config = {
-				columnDefault: {
-					width: columnWidth,
-					wrapWord: true,
-				},
-			};
-
-			spinner.stop();
-			console.log(chalk.green("Databases:"));
-			console.log(table(data, config));
-		} else {
-			spinner.stop();
-			console.log(chalk.redBright("Failed to fetch databases."));
-		}
-	});
+	.action(listDatabases);
 
 databaseSubcommands
 	.command("delete")
 	.argument("name", "The name of the database to delete.")
 	.description("Delete a D1 database.")
-	.action(async (name) => {
-		const spinner = ora("Deleting database...").start();
-		const foundDatabase = await databaseFromName(name);
-		if (foundDatabase == null) {
-			spinner.stop();
-			console.log(chalk.redBright(`Database ${chalk.bold(name)} not found.`));
-			return;
-		}
-
-		const reply = await deleteDatabase(foundDatabase.uuid);
-		spinner.stop();
-		if (reply.ok) {
-			console.log(chalk.green(`Database ${chalk.bold(name)} deleted.`));
-		} else {
-			console.log(chalk.redBright("Failed to delete database."));
-		}
-	});
+	.action(deleteDatabase);
 
 // Other subcommands.
 program
@@ -261,53 +243,79 @@ program
 		isDefault: true,
 	})
 	.description("Start a D1 query REPL.")
-	.requiredOption(
-		"-d, --database <database>",
-		"The name of the D1 database to query"
-	)
+	.option("-d, --database <database>", "The name of the D1 database to query")
 	.option(
 		"--execute <query>",
 		"Immediately run a command or a series of commands seperated with a semicolon. Useful for CI/CD pipelines."
 	)
+	.option("--json", "Output results as JSON instead of as a table.")
 	.action(async (params) => {
+		console.log(chalk.bold("Welcome to D1 Console!"));
+		console.log(
+			chalk.cyanBright(
+				"Enter a query followed by a semicolon to run it on the database. Multiple queries seperated by a semicolon will be run as a transaction (batch)."
+			)
+		);
+		console.log(chalk.cyanBright("For more information, enter HELP;"));
+
+		useJson = params.json || false;
+
 		readAuthentication();
 		const validCredentials = await checkAuthentication();
 		if (!validCredentials) {
+			console.log(chalk.redBright("Invalid authentication. "));
 			console.log(
-				chalk.redBright(
-					"Invalid authentication. Run 'login' to update your API token and/or account ID."
+				chalk.cyanBright(
+					"Run 'd1-console login' to store your Cloudflare API token and account ID. Your account ID can be found on any domain in your account, and you can create an API token here: https://dash.cloudflare.com/profile/api-tokens"
 				)
 			);
 			return;
 		}
 
-		// Find the database ID by name.
-		const foundDatabase = await databaseFromName(params.database);
-		if (foundDatabase == null) {
+		if (params.database != null) {
+			// Find the database ID by name.
+			const foundDatabase = await databaseFromNameApi(params.database);
+			if (foundDatabase == null) {
+				console.log(
+					chalk.redBright(`Cannot find database with name ${params.database}`)
+				);
+				return;
+			}
 			console.log(
-				chalk.redBright(`Cannot find database with name ${params.database}`)
+				chalk.greenBright(
+					`Now querying database ${foundDatabase.name} (${foundDatabase.uuid})`
+				)
 			);
-			return;
+			databaseUuid = foundDatabase.uuid;
+			databaseName = foundDatabase.name;
 		}
-		console.log(
-			chalk.greenBright(
-				`Now querying database ${foundDatabase.name} (${foundDatabase.uuid})`
-			)
-		);
-		databaseUuid = foundDatabase.uuid;
 
 		if (params.execute) {
-			const query = params.execute;
+			if (databaseName == null) {
+				console.log(
+					chalk.redBright(
+						"When using the --execute flag, you must also specify a database with the -d or --database flag."
+					)
+				);
+				return;
+			}
+
+			let query = params.execute as string;
+			if (!query.endsWith(";")) {
+				query += ";";
+			}
 			evalFunction(query, null, "", () => {});
 			return;
 		}
 
 		queryRepl = repl.start({
-			prompt: foundDatabase.name + " > ",
+			prompt: `${databaseName.length > 0 ? databaseName : "D1"} > `,
 			eval: evalFunction,
 			input: process.stdin,
 			output: process.stdout,
 		});
+		const homedir = os.homedir();
+		queryRepl.setupHistory(homedir + "/.d1/history", () => {});
 	});
 
 await program.parseAsync(process.argv);

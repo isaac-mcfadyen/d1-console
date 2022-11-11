@@ -1,17 +1,17 @@
 import { accountId, apiToken, runFetch } from "./authentication";
 
-export const createDatabase = async (name: string) => {
+export const createDatabaseApi = async (name: string) => {
 	return await runFetch(`/accounts/${accountId}/d1/database`, {
 		method: "POST",
 		body: JSON.stringify({ name }),
 	});
 };
-export const deleteDatabase = async (dbId: string) => {
+export const deleteDatabaseApi = async (dbId: string) => {
 	return await runFetch(`/accounts/${accountId}/d1/database/${dbId}`, {
 		method: "DELETE",
 	});
 };
-export const listDatabases = async (): Promise<
+export const listDatabasesApi = async (): Promise<
 	{ uuid: string; name: string }[] | null
 > => {
 	try {
@@ -39,18 +39,20 @@ export const listDatabases = async (): Promise<
 		return null;
 	}
 };
-export const databaseFromName = async (name: string) => {
-	const allDBs = await listDatabases();
+export const databaseFromNameApi = async (name: string) => {
+	const allDBs = await listDatabasesApi();
 	const matchingDB = (allDBs || []).find(
 		(db: { uuid: string; name: string }) => db.name === name
 	);
 	return matchingDB;
 };
 
-export const queryDatabase = async (
+export const queryDatabaseApi = async (
 	dbId: string,
 	query: string
-): Promise<{ success: true; result: any } | { success: false; error: any }> => {
+): Promise<
+	{ success: true; results: any } | { success: false; error: any }
+> => {
 	try {
 		const reply = await runFetch(
 			`/accounts/${accountId}/d1/database/${dbId}/query`,
@@ -61,7 +63,7 @@ export const queryDatabase = async (
 		);
 		if (reply.ok) {
 			const jsonData = (await reply.json()) as any;
-			return { success: true, result: jsonData.result };
+			return { success: true, results: jsonData.result[0] || [] };
 		} else {
 			try {
 				const jsonData = (await reply.json()) as any;

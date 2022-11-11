@@ -1,8 +1,16 @@
+## 1.4.2
+
+- Added the commands within the REPL (such as `USE`, `CREATE DATABASE`, etc) back _in addition_ to the new subcommands.
+- Queries seperated with a semicolon now correctly execute as a batch which supports automatic transactions (BEGIN and ROLLBACK) still fail.
+- Queries can now be joined with REPL commands by joining them with a semicolon (for example, `USE <dbname>; SELECT * FROM <table>; USE <otherdb>; SELECT * FROM <othertable>;`).
+
+## 1.4.1
+
+- Fixed small bug with a query passed to `--execute` with no semicolon causing D1 Console to silently discard the command.
+
 ## 1.4.0
 
 D1 Console has moved from a DIY CLI implementation to [`commander`](https://www.npmjs.com/package/commander), a popular Node.JS CLI framework.
-
-Breaking changes:
 
 - Commands such as `USE`, `SHOW DATABASES`, and `CREATE DATABASE` have been moved to dedicated subcommands (see `--help` for more information).
 - Colors are back! :tada: (but can be disabled with the `--no-colors` flag if needed for any reason)

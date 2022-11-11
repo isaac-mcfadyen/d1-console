@@ -1,6 +1,6 @@
 {
 	"name": "d1-console",
-	"version": "1.4.0",
+	"version": "1.4.2",
 	"license": "GPL-3.0-or-later",
 	"description": "A full query console for Cloudflare's D1 database product.",
 	"author": {
