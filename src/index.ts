@@ -49,7 +49,9 @@ const evalFunction = async (
 	}
 	lastCommand = "";
 
-	queryRepl.pause();
+	if (queryRepl != null) {
+		queryRepl.pause();
+	}
 
 	// Split the command on semicolons.
 	const commands = strippedCommand.split(";");
@@ -97,7 +99,10 @@ const evalFunction = async (
 		}
 	}
 
-	queryRepl.resume();
+	if (queryRepl != null) {
+		queryRepl.resume();
+	}
+
 	callback(null);
 };
 
@@ -262,6 +267,10 @@ program
 		"-d, --database <database>",
 		"The name of the D1 database to query"
 	)
+	.option(
+		"--execute <query>",
+		"Immediately run a command or a series of commands seperated with a semicolon. Useful for CI/CD pipelines."
+	)
 	.action(async (params) => {
 		readAuthentication();
 		const validCredentials = await checkAuthentication();
@@ -288,6 +297,12 @@ program
 			)
 		);
 		databaseUuid = foundDatabase.uuid;
+
+		if (params.execute) {
+			const query = params.execute;
+			evalFunction(query, null, "", () => {});
+			return;
+		}
 
 		queryRepl = repl.start({
 			prompt: foundDatabase.name + " > ",
