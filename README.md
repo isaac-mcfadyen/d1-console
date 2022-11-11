@@ -17,6 +17,10 @@ Supports all the features expected of a modern database client, including:
 - You can now create a database using `d1-console databases create <NAME>`.
 - To query your new D1 database, you can use the `d1-console -d <NAME>` command.
 
+## In-REPL Commands
+
+- Aside from subcommands (such as `d1-console databases create <name`) you can also create, list, delete, and switch databases from within D1 Console. To view available commands, use the `HELP` command within D1 Console.
+
 ## CI/CD
 
 - If you wish to use D1 Console in CI/CD pipelines, the flag `--execute` can be used to immediately execute a command passed in (e.g. `--execute "SELECT * FROM USERS"`). In addition, D1 Console will now prefer `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` environment variables over the saved authentication (if any).
