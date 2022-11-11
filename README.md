@@ -19,7 +19,7 @@ Supports all the features expected of a modern database client, including:
 
 ## CI/CD
 
-- If you wish to use D1 Console in CI/CD pipelines, the flag `--execute` can be used to immediately execute a command passed in (e.g. `--execute "SELECT * FROM USERS;"`, make sure to include a semicolon at the end). In addition, D1 Console will now prefer `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` environment variables over the saved authentication (if any).
+- If you wish to use D1 Console in CI/CD pipelines, the flag `--execute` can be used to immediately execute a command passed in (e.g. `--execute "SELECT * FROM USERS"`). In addition, D1 Console will now prefer `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` environment variables over the saved authentication (if any).
 
 ## Community
 
