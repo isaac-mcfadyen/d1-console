@@ -1,6 +1,6 @@
 ## 1.4.2
 
-- Added back the commands within the REPL (such as `USE`, `CREATE DATABASE`, etc) back _in addition_ to the new subcommands.
+- Added the commands within the REPL (such as `USE`, `CREATE DATABASE`, etc) back _in addition_ to the new subcommands.
 - Queries seperated with a semicolon now correctly execute as a batch which supports automatic transactions (BEGIN and ROLLBACK) still fail.
 - Queries can now be joined with REPL commands by joining them with a semicolon (for example, `USE <dbname>; SELECT * FROM <table>; USE <otherdb>; SELECT * FROM <othertable>;`).
 
