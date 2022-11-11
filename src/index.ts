@@ -297,7 +297,10 @@ program
 		databaseUuid = foundDatabase.uuid;
 
 		if (params.execute) {
-			const query = params.execute;
+			let query = params.execute as string;
+			if (!query.endsWith(";")) {
+				query += ";";
+			}
 			evalFunction(query, null, "", () => {});
 			return;
 		}
