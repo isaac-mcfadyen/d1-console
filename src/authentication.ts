@@ -59,10 +59,6 @@ export const writeAuthentication = () => {
 	}
 	fs.writeFileSync(homedir + "/.d1/credentials.json", JSON.stringify(auth));
 };
-export const deleteAuthentication = () => {
-	const homedir = os.homedir();
-	fs.unlinkSync(homedir + "/.d1/credentials.json");
-};
 export const setAuthentication = async (
 	localApiToken: string,
 	localAccountId: string

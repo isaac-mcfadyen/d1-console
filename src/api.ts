@@ -1,14 +1,13 @@
 import { accountId, apiToken, runFetch } from "./authentication";
 
-export const createDatabase = async (name: string): Promise<any> => {
-	const reply = await runFetch(`/accounts/${accountId}/d1/database`, {
+export const createDatabase = async (name: string) => {
+	return await runFetch(`/accounts/${accountId}/d1/database`, {
 		method: "POST",
 		body: JSON.stringify({ name }),
 	});
-	return await reply.json();
 };
 export const deleteDatabase = async (dbId: string) => {
-	await runFetch(`/accounts/${accountId}/d1/database/${dbId}`, {
+	return await runFetch(`/accounts/${accountId}/d1/database/${dbId}`, {
 		method: "DELETE",
 	});
 };
