@@ -4,12 +4,10 @@ import {
 	accountId,
 	apiToken,
 	checkAuthentication,
-	deleteAuthentication,
 	readAuthentication,
 	setAuthentication,
 	writeAuthentication,
 } from "./authentication.js";
-import { openRl, question, rl } from "./userInterface.js";
 import { table } from "table";
 import {
 	createDatabase,
