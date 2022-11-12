@@ -63,7 +63,7 @@ export const queryDatabaseApi = async (
 		);
 		if (reply.ok) {
 			const jsonData = (await reply.json()) as any;
-			return { success: true, results: jsonData.result[0] || [] };
+			return { success: true, results: jsonData.result[0].results || [] };
 		} else {
 			try {
 				const jsonData = (await reply.json()) as any;

@@ -93,31 +93,29 @@ export const queryDatabase = async (
 	}
 	if (reply.results.length == 0) return;
 
-	for (const result of reply.results.map((result: any) => result.results)) {
-		if (result.length == 0) continue;
+	if (useJson) {
+		console.log(JSON.stringify(reply.results, null, 2));
+	} else {
+		let data = [];
 
-		if (useJson) {
-			console.log(JSON.stringify(result, null, 2));
-		} else {
-			let data = [];
-
-			let headers = [];
-			for (let key of Object.keys(result[0])) {
-				headers.push(chalk.bold(key));
-			}
-			data.push(headers);
-			data = data.concat(result.map((row: any) => [...Object.values(row)]));
-
-			const width = process.stdout.columns;
-			const numberOfColumns = data[0].length + 1.5;
-			const columnWidth = Math.floor(width / numberOfColumns);
-			const config = {
-				columnDefault: {
-					width: columnWidth,
-					wrapWord: true,
-				},
-			};
-			console.log(table(data, config));
+		let headers = [];
+		for (let key of Object.keys(reply.results[0])) {
+			headers.push(chalk.bold(key));
 		}
+		data.push(headers);
+		data = data.concat(
+			reply.results.map((row: any) => [...Object.values(row)])
+		);
+
+		const width = process.stdout.columns;
+		const numberOfColumns = data[0].length + 1.5;
+		const columnWidth = Math.floor(width / numberOfColumns);
+		const config = {
+			columnDefault: {
+				width: columnWidth,
+				wrapWord: true,
+			},
+		};
+		console.log(table(data, config));
 	}
 };
