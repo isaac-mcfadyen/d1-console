@@ -1,3 +1,7 @@
+## 1.4.3
+
+- Fixed issue where all queries resulted in an error.
+
 ## 1.4.2
 
 - Added the commands within the REPL (such as `USE`, `CREATE DATABASE`, etc) back _in addition_ to the new subcommands.
