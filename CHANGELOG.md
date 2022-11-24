@@ -1,3 +1,7 @@
+## 1.4.4
+
+- Fixed bug causing inability to login to D1 Console via the new `login` command.
+
 ## 1.4.3
 
 - Fixed issue where all queries resulted in an error.

@@ -208,16 +208,17 @@ program
 		"Cloudflare Account ID (can be found on any domain in your account)"
 	)
 	.description("Login to Cloudflare D1 using an API token and account ID.")
-	.action(async (apiToken, accountId) => {
-		await setAuthentication(apiToken, accountId);
+	.action(async (params) => {
+		await setAuthentication(params.apiToken, params.accountId);
 
 		const validCredentials = await checkAuthentication();
 		if (!validCredentials) {
 			console.log(
 				chalk.redBright(
-					"Invalid credentials! Check your API token and account ID."
+					"Invalid credentials! Check your API token and account ID for typos, and try wrapping in quotes if there are any special characters."
 				)
 			);
+			return;
 		}
 
 		writeAuthentication();
