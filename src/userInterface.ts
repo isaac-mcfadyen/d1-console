@@ -16,7 +16,8 @@ export const createDatabase = async (name: string) => {
 	if (reply.ok) {
 		console.log(chalk.green(`Database ${chalk.bold(name)} created.`));
 	} else {
-		console.log(chalk.redBright("Failed to create database."));
+		console.error(chalk.redBright("Failed to create database."));
+		process.exit(1);
 	}
 };
 export const deleteDatabase = async (name: string) => {
@@ -24,7 +25,7 @@ export const deleteDatabase = async (name: string) => {
 	const foundDatabase = await databaseFromNameApi(name);
 	if (foundDatabase == null) {
 		spinner.stop();
-		console.log(chalk.redBright(`Database ${chalk.bold(name)} not found.`));
+		console.error(chalk.redBright(`Database ${chalk.bold(name)} not found.`));
 		return;
 	}
 
@@ -33,7 +34,7 @@ export const deleteDatabase = async (name: string) => {
 	if (reply.ok) {
 		console.log(chalk.green(`Database ${chalk.bold(name)} deleted.`));
 	} else {
-		console.log(chalk.redBright("Failed to delete database."));
+		console.error(chalk.redBright("Failed to delete database."));
 	}
 };
 export const listDatabases = async () => {
@@ -41,12 +42,12 @@ export const listDatabases = async () => {
 	const reply = await listDatabasesApi();
 	if (reply != null) {
 		if (reply.length === 0) {
-			console.log(
+			console.error(
 				chalk.redBright(
 					"No databases found. Create one using the 'databases create' command."
 				)
 			);
-			return;
+			process.exit(1);
 		}
 
 		let data = [];
@@ -68,7 +69,8 @@ export const listDatabases = async () => {
 		console.log(table(data, config));
 	} else {
 		spinner.stop();
-		console.log(chalk.redBright("Failed to fetch databases."));
+		console.error(chalk.redBright("Failed to fetch databases."));
+		process.exit(1);
 	}
 };
 
@@ -78,9 +80,9 @@ export const queryDatabase = async (
 	useJson: boolean
 ) => {
 	if (databaseUuid.length == 0) {
-		console.log(
+		console.error(
 			chalk.redBright(
-				"No database selected. Run USE <name> to select a database, or SHOW DATABASES to list your available databases."
+				"No database selected. Run USE <name> to select a database, or SHOW DATABASES to list your available databases. If running in CI/CD, use -d flag to select a database."
 			)
 		);
 		return;
@@ -88,7 +90,7 @@ export const queryDatabase = async (
 
 	const reply = await queryDatabaseApi(databaseUuid, query);
 	if (!reply.success) {
-		console.log(chalk.redBright(reply.error));
+		console.error(chalk.redBright(reply.error));
 		return;
 	}
 	if (reply.results.length == 0) return;
