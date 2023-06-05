@@ -1,3 +1,8 @@
+## 1.4.5
+
+- Added `--silent` flag to silence welcome banner and version information, intended for running in CI/CD.
+- Changed error messages to log to `stderr` rather than `stdout`.
+
 ## 1.4.4
 
 - Fixed bug causing inability to login to D1 Console via the new `login` command.

@@ -81,7 +81,7 @@ const evalFunction = async (
 			if (upperCommand.startsWith("USE")) {
 				const databaseName = command.match(/USE\s+(.*)/);
 				if (databaseName == null) {
-					console.log(chalk.redBright("Invalid USE statement."));
+					console.error(chalk.redBright("Invalid USE statement."));
 					return;
 				}
 				const foundDatabase = await databaseFromNameApi(databaseName[1]);
@@ -96,14 +96,14 @@ const evalFunction = async (
 			} else if (upperCommand.startsWith("CREATE DATABASE")) {
 				const databaseName = command.match(/CREATE DATABASE\s+(.*)/);
 				if (databaseName == null) {
-					console.log(chalk.redBright("Invalid CREATE DATABASE statement."));
+					console.error(chalk.redBright("Invalid CREATE DATABASE statement."));
 					return;
 				}
 				await createDatabase(databaseName[1]);
 			} else if (upperCommand.startsWith("DROP DATABASE")) {
 				const databaseName = command.match(/DROP DATABASE\s+(.*)/);
 				if (databaseName == null) {
-					console.log(chalk.redBright("Invalid DROP DATABASE statement."));
+					console.error(chalk.redBright("Invalid DROP DATABASE statement."));
 					return;
 				}
 				await deleteDatabase(databaseName[1]);
@@ -147,11 +147,6 @@ const evalFunction = async (
 	callback(null);
 };
 
-console.log(chalk.bold("D1 Console " + VERSION));
-
-// Parse auth.
-readAuthentication();
-
 // Global options.
 const program = new Command();
 program
@@ -174,6 +169,9 @@ program
 		}
 	});
 
+// Parse auth.
+readAuthentication();
+
 // Database management subcommands.
 const databaseSubcommands = program
 	.command("databases")
@@ -183,17 +181,26 @@ databaseSubcommands
 	.command("create")
 	.argument("<name>", "The name of the database to create.")
 	.description("Create a new D1 database.")
+	.hook("preAction", async () => {
+		console.log(chalk.bold("D1 Console " + VERSION));
+	})
 	.action(createDatabase);
 
 databaseSubcommands
 	.command("list")
 	.description("List your D1 databases.")
+	.hook("preAction", async () => {
+		console.log(chalk.bold("D1 Console " + VERSION));
+	})
 	.action(listDatabases);
 
 databaseSubcommands
 	.command("delete")
 	.argument("name", "The name of the database to delete.")
 	.description("Delete a D1 database.")
+	.hook("preAction", async () => {
+		console.log(chalk.bold("D1 Console " + VERSION));
+	})
 	.action(deleteDatabase);
 
 // Other subcommands.
@@ -208,17 +215,20 @@ program
 		"Cloudflare Account ID (can be found on any domain in your account)"
 	)
 	.description("Login to Cloudflare D1 using an API token and account ID.")
+	.hook("preAction", async () => {
+		console.log(chalk.bold("D1 Console " + VERSION));
+	})
 	.action(async (params) => {
 		await setAuthentication(params.apiToken, params.accountId);
 
 		const validCredentials = await checkAuthentication();
 		if (!validCredentials) {
-			console.log(
+			console.error(
 				chalk.redBright(
 					"Invalid credentials! Check your API token and account ID for typos, and try wrapping in quotes if there are any special characters."
 				)
 			);
-			return;
+			process.exit(1);
 		}
 
 		writeAuthentication();
@@ -227,6 +237,9 @@ program
 program
 	.command("whoami")
 	.description("View your current login credentials.")
+	.hook("preAction", async () => {
+		console.log(chalk.bold("D1 Console " + VERSION));
+	})
 	.action(async () => {
 		const validCredentials = readAuthentication();
 		if (validCredentials) {
@@ -236,7 +249,8 @@ program
 				)
 			);
 		} else {
-			console.log(chalk.redBright("Not logged in to Cloudflare D1."));
+			console.error(chalk.redBright("Not logged in to Cloudflare D1."));
+			process.exit(1);
 		}
 	});
 program
@@ -250,55 +264,63 @@ program
 		"Immediately run a command or a series of commands seperated with a semicolon. Useful for CI/CD pipelines."
 	)
 	.option("--json", "Output results as JSON instead of as a table.")
+	.option("--silent", "Don't show the D1 Console banner at startup.")
 	.action(async (params) => {
-		console.log(chalk.bold("Welcome to D1 Console!"));
-		console.log(
-			chalk.cyanBright(
-				"Enter a query followed by a semicolon to run it on the database. Multiple queries seperated by a semicolon will be run as a transaction (batch)."
-			)
-		);
-		console.log(chalk.cyanBright("For more information, enter HELP;"));
+		const isLoud = params.silent == null || !params.silent;
+		if (isLoud) {
+			console.log(chalk.bold("D1 Console " + VERSION));
+			console.log(chalk.bold("Welcome to D1 Console!"));
+			console.log(
+				chalk.cyanBright(
+					"Enter a query followed by a semicolon to run it on the database. Multiple queries seperated by a semicolon will be run as a transaction (batch)."
+				)
+			);
+			console.log(chalk.cyanBright("For more information, enter HELP;"));
+		}
 
 		useJson = params.json || false;
 
 		readAuthentication();
 		const validCredentials = await checkAuthentication();
 		if (!validCredentials) {
-			console.log(chalk.redBright("Invalid authentication. "));
-			console.log(
+			console.error(chalk.redBright("Invalid authentication. "));
+			console.error(
 				chalk.cyanBright(
 					"Run 'd1-console login' to store your Cloudflare API token and account ID. Your account ID can be found on any domain in your account, and you can create an API token here: https://dash.cloudflare.com/profile/api-tokens"
 				)
 			);
-			return;
+			process.exit(1);
 		}
 
 		if (params.database != null) {
 			// Find the database ID by name.
 			const foundDatabase = await databaseFromNameApi(params.database);
 			if (foundDatabase == null) {
-				console.log(
+				console.error(
 					chalk.redBright(`Cannot find database with name ${params.database}`)
 				);
-				return;
+				process.exit(1);
 			}
-			console.log(
-				chalk.greenBright(
-					`Now querying database ${foundDatabase.name} (${foundDatabase.uuid})`
-				)
-			);
+
+			if (isLoud) {
+				console.log(
+					chalk.greenBright(
+						`Now querying database ${foundDatabase.name} (${foundDatabase.uuid})`
+					)
+				);
+			}
 			databaseUuid = foundDatabase.uuid;
 			databaseName = foundDatabase.name;
 		}
 
 		if (params.execute) {
 			if (databaseName == null) {
-				console.log(
+				console.error(
 					chalk.redBright(
 						"When using the --execute flag, you must also specify a database with the -d or --database flag."
 					)
 				);
-				return;
+				process.exit(1);
 			}
 
 			let query = params.execute as string;
