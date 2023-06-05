@@ -17,7 +17,7 @@ export const createDatabase = async (name: string) => {
 		console.log(chalk.green(`Database ${chalk.bold(name)} created.`));
 	} else {
 		console.error(chalk.redBright("Failed to create database."));
-		process.exit(1);
+		return;
 	}
 };
 export const deleteDatabase = async (name: string) => {
@@ -47,7 +47,7 @@ export const listDatabases = async () => {
 					"No databases found. Create one using the 'databases create' command."
 				)
 			);
-			process.exit(1);
+			return;
 		}
 
 		let data = [];
@@ -70,7 +70,6 @@ export const listDatabases = async () => {
 	} else {
 		spinner.stop();
 		console.error(chalk.redBright("Failed to fetch databases."));
-		process.exit(1);
 	}
 };
 
