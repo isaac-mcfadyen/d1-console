@@ -112,14 +112,12 @@ const evalFunction = async (
 			} else if (upperCommand.startsWith("HELP")) {
 				console.log(chalk.bold("Available commands: "));
 				console.log(
-					`${chalk.bold(
-						"CREATE DATABASE <name>"
-					)} - Create a new D1 database. ${chalk.bold(
-						"THIS CANNOT BE UNDONE!"
-					)}`
+					`${chalk.bold("CREATE DATABASE <name>")} - Create a new D1 database.`
 				);
 				console.log(
-					`${chalk.bold("DROP DATABASE <name>")} - Delete a D1 database.`
+					`${chalk.bold(
+						"DROP DATABASE <name>"
+					)} - Delete a D1 database. ${chalk.bold("THIS CANNOT BE UNDONE!")}`
 				);
 				console.log(
 					`${chalk.bold("USE <name>")} - Switch to a different database.`
