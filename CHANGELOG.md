@@ -1,3 +1,7 @@
+## 1.4.6
+- Updated incorrect warning message on CREATE/DROP DATABASE commands.
+- Removed unused validation function - validation of disallowed queries is now handled by D1.
+
 ## 1.4.5
 
 - Added `--silent` flag to silence welcome banner and version information, intended for running in CI/CD.
