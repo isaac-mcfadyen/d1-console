@@ -1,3 +1,6 @@
+## 1.4.7
+- Fixed error when using lowercased in-REPL commands.
+
 ## 1.4.6
 - Updated incorrect warning message on CREATE/DROP DATABASE commands.
 - Removed unused validation function - validation of disallowed queries is now handled by D1.
