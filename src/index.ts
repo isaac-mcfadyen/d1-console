@@ -79,7 +79,7 @@ const evalFunction = async (
 			}
 
 			if (upperCommand.startsWith("USE")) {
-				const databaseName = command.match(/USE\s+(.*)/);
+				const databaseName = command.match(/USE\s+(.*)/i);
 				if (databaseName == null) {
 					console.error(chalk.redBright("Invalid USE statement."));
 					return;
@@ -94,14 +94,14 @@ const evalFunction = async (
 					queryRepl.setPrompt(`${foundDatabase.name} > `);
 				}
 			} else if (upperCommand.startsWith("CREATE DATABASE")) {
-				const databaseName = command.match(/CREATE DATABASE\s+(.*)/);
+				const databaseName = command.match(/CREATE DATABASE\s+(.*)/i);
 				if (databaseName == null) {
 					console.error(chalk.redBright("Invalid CREATE DATABASE statement."));
 					return;
 				}
 				await createDatabase(databaseName[1]);
 			} else if (upperCommand.startsWith("DROP DATABASE")) {
-				const databaseName = command.match(/DROP DATABASE\s+(.*)/);
+				const databaseName = command.match(/DROP DATABASE\s+(.*)/i);
 				if (databaseName == null) {
 					console.error(chalk.redBright("Invalid DROP DATABASE statement."));
 					return;
