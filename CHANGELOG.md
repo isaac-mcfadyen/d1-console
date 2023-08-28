@@ -1,5 +1,8 @@
-## 1.4.7
+## 1.4.8
 - Fixed error when using lowercased in-REPL commands.
+
+## 1.4.7 (yanked)
+- Yanked from NPM due to broken release. See 1.4.8.
 
 ## 1.4.6
 - Updated incorrect warning message on CREATE/DROP DATABASE commands.
